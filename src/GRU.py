@@ -16,7 +16,6 @@ from keras.layers import GRU, Bidirectional, GlobalAveragePooling1D, GlobalMaxPo
 from keras.preprocessing import text, sequence
 from keras.callbacks import Callback
 
-from utils import save_object, load_object
 
 warnings.filterwarnings('ignore')
 np.random.seed(42)
@@ -67,7 +66,6 @@ epochs = 2
 
 tokenizer = text.Tokenizer(num_words=max_features)
 tokenizer.fit_on_texts(list(X_train) + list(X_test))
-save_object(tokenizer, TOKENIZER)
 
 X_train = tokenizer.texts_to_sequences(X_train)
 x_train = sequence.pad_sequences(X_train, maxlen=maxlen)
