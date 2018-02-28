@@ -16,7 +16,7 @@ from keras.layers import GRU, Bidirectional, GlobalAveragePooling1D, GlobalMaxPo
 from keras.preprocessing import text, sequence
 from keras.callbacks import Callback
 
-from utils import save_object
+from utils import save_object, load_object
 
 warnings.filterwarnings('ignore')
 np.random.seed(42)
@@ -58,12 +58,16 @@ max_features = 30000
 maxlen = 100
 embed_size = 300
 
+batch_size = 32
+epochs = 2
+
 # Check whether these data already exist, if so load from pickle
 
 # tokenizer
 
 if os.path.exists(TOKENIZER):
-    tokenizer = pickle.load(TOKENIZER)
+    tokenizer = load_object(TOKENIZER)
+    print("loaded ", TOKENIZER)
 
 else:
     tokenizer = text.Tokenizer(num_words=max_features)
@@ -74,7 +78,8 @@ else:
 # Train set
 
 if os.path.exists(X_TRAIN):
-    X_train = pickle.load(X_TRAIN)
+    X_train = load_object(X_TRAIN)
+    print("loaded ", X_TRAIN)
 
 else:
     X_train = tokenizer.texts_to_sequences(X_train)
@@ -85,7 +90,8 @@ else:
 # Test sets
 
 if os.path.exists(X_TEST):
-    X_test = pickle.load(X_TEST)
+    X_test = load_object(X_TEST)
+    print("loaded ", X_TEST)
 
 else:
     X_test = tokenizer.texts_to_sequences(X_test)
@@ -102,7 +108,8 @@ word_index = tokenizer.word_index
 nb_words = min(max_features, len(word_index))
 
 if os.path.exists(EMBEDDING_MATRIX):
-    X_test = pickle.load(EMBEDDING_MATRIX)
+    X_test = load_object(EMBEDDING_MATRIX)
+    print("loaded ", EMBEDDING_MATRIX)
 
 else:
     embedding_matrix = np.zeros((nb_words, embed_size))
@@ -127,6 +134,8 @@ class RocAucEvaluation(Callback):
             score = roc_auc_score(self.y_val, y_pred)
             print("\n ROC-AUC - epoch: %d - score: %.6f \n" % (epoch+1, score))
 
+print("defining model")
+
 def get_model():
     inp = Input(shape=(maxlen, ))
     x = Embedding(max_features, embed_size, weights=[embedding_matrix])(inp)
@@ -147,8 +156,6 @@ def get_model():
 model = get_model()
 
 
-batch_size = 32
-epochs = 2
 
 print("Splitting dataset")
 
