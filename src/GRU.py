@@ -18,13 +18,13 @@ warnings.filterwarnings('ignore')
 
 import os
 os.environ['OMP_NUM_THREADS'] = '4'
+DATADIR=os.environ.get('DATADIR')
 
+EMBEDDING_FILE = os.path.join(DATADIR, 'fasttext-crawl-300d-2m/crawl-300d-2M.vec')
 
-EMBEDDING_FILE = '../input/fasttext-crawl-300d-2m/crawl-300d-2M.vec'
-
-train = pd.read_csv('../input/jigsaw-toxic-comment-classification-challenge/train.csv')
-test = pd.read_csv('../input/jigsaw-toxic-comment-classification-challenge/test.csv')
-submission = pd.read_csv('../input/jigsaw-toxic-comment-classification-challenge/sample_submission.csv')
+train = pd.read_csv(os.path.join(DATADIR, 'jigsaw-toxic-comment-classification-challenge/train.csv'))
+test = pd.read_csv(os.path.join(DATADIR,'jigsaw-toxic-comment-classification-challenge/test.csv'))
+submission = pd.read_csv(os.path.join(DATADIR, 'jigsaw-toxic-comment-classification-challenge/sample_submission.csv'))
 
 X_train = train["comment_text"].fillna("fillna").values
 y_train = train[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]].values
