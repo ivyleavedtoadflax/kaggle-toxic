@@ -1,2 +1,3 @@
 .envrc
 input
+*__pycache__*

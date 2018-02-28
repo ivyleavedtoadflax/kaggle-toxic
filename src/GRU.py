@@ -1,7 +1,10 @@
-# From https://www.kaggle.com/maupson/pooled-gru-fasttext
+"""
+From https://www.kaggle.com/maupson/pooled-gru-fasttext
+"""
 
+import os
+import warnings
 import numpy as np
-np.random.seed(42)
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
@@ -13,18 +16,38 @@ from keras.layers import GRU, Bidirectional, GlobalAveragePooling1D, GlobalMaxPo
 from keras.preprocessing import text, sequence
 from keras.callbacks import Callback
 
-import warnings
-warnings.filterwarnings('ignore')
+from utils import save_object
 
-import os
+warnings.filterwarnings('ignore')
+np.random.seed(42)
+
 os.environ['OMP_NUM_THREADS'] = '4'
+
+# Load environmental variables
+
 DATADIR=os.environ.get('DATADIR')
 
-EMBEDDING_FILE = os.path.join(DATADIR, 'fasttext-crawl-300d-2m/crawl-300d-2M.vec')
+# Set data locations
 
-train = pd.read_csv(os.path.join(DATADIR, 'jigsaw-toxic-comment-classification-challenge/train.csv'))
-test = pd.read_csv(os.path.join(DATADIR,'jigsaw-toxic-comment-classification-challenge/test.csv'))
-submission = pd.read_csv(os.path.join(DATADIR, 'jigsaw-toxic-comment-classification-challenge/sample_submission.csv'))
+EMBEDDING_FILE = os.path.join(DATADIR, 'crawl-300d-2M.vec')
+TRAIN_DATA = os.path.join(DATADIR, 'train.csv')
+TEST_DATA = os.path.join(DATADIR, 'test.csv')
+SUBMISSION_DATA = os.path.join(DATADIR, 'sample_submission.csv')
+
+# Load tokenizer and padded train and test from pickle
+
+TOKENIZER = os.path.join(DATADIR, 'tokenizer.pkl')
+X_TRAIN = os.path.join(DATADIR, 'x_train.pkl')
+X_TEST = os.path.join(DATADIR, 'x_test.pkl')
+EMBEDDING_MATRIX = os.path.join(DATADIR, 'embedding_matrix.pkl')
+
+# Load data
+
+train = pd.read_csv(TRAIN_DATA)
+test = pd.read_csv(TEST_DATA)
+submission = pd.read_csv(SUBMISSION_DATA)
+
+# Fill NAs
 
 X_train = train["comment_text"].fillna("fillna").values
 y_train = train[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]].values
@@ -35,25 +58,61 @@ max_features = 30000
 maxlen = 100
 embed_size = 300
 
-tokenizer = text.Tokenizer(num_words=max_features)
-tokenizer.fit_on_texts(list(X_train) + list(X_test))
-X_train = tokenizer.texts_to_sequences(X_train)
-X_test = tokenizer.texts_to_sequences(X_test)
-x_train = sequence.pad_sequences(X_train, maxlen=maxlen)
-x_test = sequence.pad_sequences(X_test, maxlen=maxlen)
+# Check whether these data already exist, if so load from pickle
+
+# tokenizer
+
+if os.path.exists(TOKENIZER):
+    tokenizer = pickle.load(TOKENIZER)
+
+else:
+    tokenizer = text.Tokenizer(num_words=max_features)
+    tokenizer.fit_on_texts(list(X_train) + list(X_test))
+    save_object(tokenizer, TOKENIZER)
+    print("wrote ", TOKENIZER)
+
+# Train set
+
+if os.path.exists(X_TRAIN):
+    X_train = pickle.load(X_TRAIN)
+
+else:
+    X_train = tokenizer.texts_to_sequences(X_train)
+    x_train = sequence.pad_sequences(X_train, maxlen=maxlen)
+    save_object(x_train, X_TRAIN)
+    print("wrote ", X_TRAIN)
+
+# Test sets
+
+if os.path.exists(X_TEST):
+    X_test = pickle.load(X_TEST)
+
+else:
+    X_test = tokenizer.texts_to_sequences(X_test)
+    x_test = sequence.pad_sequences(X_test, maxlen=maxlen)
+    save_object(x_test, X_TEST)
+    print("wrote ", X_TEST)
 
 
 def get_coefs(word, *arr): return word, np.asarray(arr, dtype='float32')
 embeddings_index = dict(get_coefs(*o.rstrip().rsplit(' ')) for o in open(EMBEDDING_FILE))
 
+
 word_index = tokenizer.word_index
 nb_words = min(max_features, len(word_index))
-embedding_matrix = np.zeros((nb_words, embed_size))
-for word, i in word_index.items():
-    if i >= max_features: continue
-    embedding_vector = embeddings_index.get(word)
-    if embedding_vector is not None: embedding_matrix[i] = embedding_vector
 
+if os.path.exists(EMBEDDING_MATRIX):
+    X_test = pickle.load(EMBEDDING_MATRIX)
+
+else:
+    embedding_matrix = np.zeros((nb_words, embed_size))
+    for word, i in word_index.items():
+        if i >= max_features: continue
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None: embedding_matrix[i] = embedding_vector
+    save_object(embedding_matrix, EMBEDDING_MATRIX)
+    print("wrote ", EMBEDDING_MATRIX)
+    
 
 class RocAucEvaluation(Callback):
     def __init__(self, validation_data=(), interval=1):
@@ -67,7 +126,6 @@ class RocAucEvaluation(Callback):
             y_pred = self.model.predict(self.X_val, verbose=0)
             score = roc_auc_score(self.y_val, y_pred)
             print("\n ROC-AUC - epoch: %d - score: %.6f \n" % (epoch+1, score))
-
 
 def get_model():
     inp = Input(shape=(maxlen, ))
@@ -92,8 +150,12 @@ model = get_model()
 batch_size = 32
 epochs = 2
 
+print("Splitting dataset")
+
 X_tra, X_val, y_tra, y_val = train_test_split(x_train, y_train, train_size=0.95, random_state=233)
 RocAuc = RocAucEvaluation(validation_data=(X_val, y_val), interval=1)
+
+print("Fitting model")
 
 hist = model.fit(X_tra, y_tra, batch_size=batch_size, epochs=epochs, validation_data=(X_val, y_val),
                  callbacks=[RocAuc], verbose=2)
