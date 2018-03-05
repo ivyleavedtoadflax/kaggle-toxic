@@ -29,7 +29,7 @@ logger = logging.getLogger('GRU')
 
 
 warnings.filterwarnings('ignore')
-RANDOM_SEED=42
+RANDOM_SEED = os.environ.get('RANDOM_SEED')
 np.random.seed(RANDOM_SEED)
 
 #os.environ['OMP_NUM_THREADS'] = '4'
@@ -49,17 +49,17 @@ EMBEDDINGS_INDEX_FILE = os.path.join(DATADIR, 'embeddings_index.json')
 TB_LOG_DIR = os.path.join(TB_LOG_ROOT, datetime.now().strftime('%Y%m%d-%H%M%S'))
 # Set hyperparameters
 
-NUM_WORDS = 30000
-MAX_SEQUENCE_LENGTH = 100
-EMBEDDING_DIM = 300
-TRAIN_BATCH_SIZE = 1024
-PREDICTION_BATCH_SIZE = 1024
-EPOCHS = 2
-TRAIN_SIZE = 0.95
-DROPOUT_1 = 0.2
-LEARNING_RATE = 0.001
+NUM_WORDS = os.environ.get('NUM_WORDS')
+MAX_SEQUENCE_LENGTH = os.environ.get('MAX_SEQUENCE_LENGTH')
+EMBEDDING_DIM = os.environ.get('EMBEDDING_DIM')
+TRAIN_BATCH_SIZE = os.environ.get('TRAIN_BATCH_SIZE')
+PREDICTION_BATCH_SIZE = os.environ.get('PREDICTION_BATCH_SIZE')
+EPOCHS = os.environ.get('EPOCHS')
+TRAIN_SIZE = os.environ.get('TRAIN_SIZE')
+DROPOUT_1 = os.environ.get('DROPOUT_1')
+LEARNING_RATE = os.environ.get('LEARNING_RATE')
 # https://research.fb.com/wp-content/uploads/2017/06/imagenet1kin1h5.pdf?
-LEARNING_RATE_DECAY = 0.0
+LEARNING_RATE_DECAY = os.environ.get('LEARNING_RATE_DECAY')
 
 logging.info('------- Model hyperparameters -------')
 logging.info('MAX_SEQUENCE_LENGTH:   %s', MAX_SEQUENCE_LENGTH)
@@ -182,7 +182,8 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('loss.png')
+plt.savefig(os.path.join(TB_LOG_ROOT, 'loss.png'))
+
 # summarize history for loss
 plt.plot(hist.history.history['loss'])
 plt.plot(hist.history.history['val_loss'])
@@ -190,7 +191,7 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('cost.png')
+plt.savefig(os.path.join(TB_LOG_ROOT, 'cost.png'))
 
 logging.info('Running prediction')
 
