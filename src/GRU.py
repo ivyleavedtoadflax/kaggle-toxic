@@ -15,8 +15,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from keras.models import Model
-from keras.layers import (Input, Dense, Embedding, SpatialDropout1D, concatenate, 
-                          GRU, Bidirectional, GlobalAveragePooling1D, 
+from keras.layers import (Input, Dense, Embedding, concatenate, GRU, 
+                          Bidirectional, GlobalAveragePooling1D, 
                           GlobalMaxPooling1D, BatchNormalization, CuDNNGRU)
 #from keras.optimizers import Adam
 from keras.preprocessing import text, sequence
@@ -144,7 +144,6 @@ tb = TensorBoard(
 def get_model():
     inp = Input(shape=(MAX_SEQUENCE_LENGTH, ))
     x = Embedding(NUM_WORDS, EMBEDDING_DIM, weights=[embedding_matrix])(inp)
-    x = SpatialDropout1D(DROPOUT_1)(x)
     x = Bidirectional(GRU(80, return_sequences=True))(x)
     avg_pool = GlobalAveragePooling1D()(x)
     max_pool = GlobalMaxPooling1D()(x)
