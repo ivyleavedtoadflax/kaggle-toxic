@@ -23,10 +23,14 @@ from keras.preprocessing import text, sequence
 from keras.callbacks import TensorBoard
 from utils import Metrics, RocAucEvaluation, get_coefs
 
+# Setup logging
+
 LOGGING_CONFIG = 'logging.conf'
 logging.config.fileConfig(LOGGING_CONFIG)
 logger = logging.getLogger('GRU')
 
+
+logger.debug("TEST")
 
 warnings.filterwarnings('ignore')
 RANDOM_SEED = os.environ.get('RANDOM_SEED')
@@ -38,7 +42,8 @@ np.random.seed(RANDOM_SEED)
 
 DATADIR = os.environ.get('DATADIR') # = '../input/jigsaw-toxic-comment-classification-challenge/'
 EMBEDDING_DIR = os.environ.get('EMBEDDING_DIR') # = '../input/fasttext-crawl-300d-2m/'
-TB_LOG_ROOT = os.environ.get('TB_LOG_ROOT')
+PROJECT_ROOT = os.environ.get('PROJECT_ROOT')
+
 # Set data locations
 
 EMBEDDING_FILE = os.path.join(EMBEDDING_DIR, 'crawl-300d-2M.vec')
@@ -46,7 +51,15 @@ TRAIN_DATA = os.path.join(DATADIR, 'train.csv')
 TEST_DATA = os.path.join(DATADIR, 'test.csv')
 SUBMISSION_DATA = os.path.join(DATADIR, 'sample_submission.csv')
 EMBEDDINGS_INDEX_FILE = os.path.join(DATADIR, 'embeddings_index.json')
-TB_LOG_DIR = os.path.join(TB_LOG_ROOT, datetime.now().strftime('%Y%m%d-%H%M%S'))
+NOW = datetime.now().strftime('%Y%m%d-%H%M%S')
+TB_LOG_DIR = os.path.join(PROJECT_ROOT, 'tb_logs', NOW)
+LOG_DIR = os.path.join(PROJECT_ROOT, 'logs', NOW)
+
+filehandler = logging.FileHandler(NOW + '.log')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+filehandler.setFormatter(formatter)
+logger.addHandler(filehandler)
+
 # Set hyperparameters
 
 NUM_WORDS = os.environ.get('NUM_WORDS')
@@ -181,7 +194,7 @@ plt.title('model accuracy')
 plt.ylabel('accuracy')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join(TB_LOG_ROOT, 'loss.png'))
+plt.savefig(os.path.join(PROJECT_ROOT, 'loss.png'))
 
 # summarize history for loss
 plt.plot(hist.history.history['loss'])
@@ -190,7 +203,7 @@ plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join(TB_LOG_ROOT, 'cost.png'))
+plt.savefig(os.path.join(PROJECT_ROOT, 'cost.png'))
 
 logging.info('Running prediction')
 
