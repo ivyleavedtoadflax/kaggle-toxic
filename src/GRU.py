@@ -9,44 +9,24 @@ import logging
 import logging.config
 import os
 import warnings
+from datetime import datetime
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
 from keras.models import Model
 from keras.layers import (Input, Dense, Embedding, SpatialDropout1D, concatenate, 
-    GRU, Bidirectional, GlobalAveragePooling1D, GlobalMaxPooling1D, 
-    BatchNormalization, CuDNNGRU)
+                          GRU, Bidirectional, GlobalAveragePooling1D, 
+                          GlobalMaxPooling1D, BatchNormalization, CuDNNGRU)
 #from keras.optimizers import Adam
 from keras.preprocessing import text, sequence
-from keras.callbacks import Callback, TensorBoard
-from datetime import datetime
+from keras.callbacks import TensorBoard
+from utils import Metrics, RocAucEvaluation, get_coefs
 
 LOGGING_CONFIG = 'logging.conf'
 logging.config.fileConfig(LOGGING_CONFIG)
 logger = logging.getLogger('GRU')
 
-"""
-Helper functions for model evaluation
-"""
-
-def get_coefs(word, *arr): 
-    """
-    """   
-    return word, np.asarray(arr, dtype='float32')
-    
-class RocAucEvaluation(Callback):
-    def __init__(self, validation_data=(), interval=1):
-        super(Callback, self).__init__()
-
-        self.interval = interval
-        self.X_val, self.y_val = validation_data
-
-    def on_epoch_end(self, epoch, logs={}):
-        if epoch % self.interval == 0:
-            y_pred = self.model.predict(self.X_val, verbose=0)
-            score = roc_auc_score(self.y_val, y_pred)
-            logging.info("\n ROC-AUC - epoch: %d - score: %.6f \n" % (epoch+1, score))
 
 warnings.filterwarnings('ignore')
 RANDOM_SEED=42
@@ -58,7 +38,7 @@ np.random.seed(RANDOM_SEED)
 
 DATADIR = os.environ.get('DATADIR') # = '../input/jigsaw-toxic-comment-classification-challenge/'
 EMBEDDING_DIR = os.environ.get('EMBEDDING_DIR') # = '../input/fasttext-crawl-300d-2m/'
-
+TB_LOG_ROOT = os.environ.get('TB_LOG_ROOT')
 # Set data locations
 
 EMBEDDING_FILE = os.path.join(EMBEDDING_DIR, 'crawl-300d-2M.vec')
@@ -66,7 +46,7 @@ TRAIN_DATA = os.path.join(DATADIR, 'train.csv')
 TEST_DATA = os.path.join(DATADIR, 'test.csv')
 SUBMISSION_DATA = os.path.join(DATADIR, 'sample_submission.csv')
 EMBEDDINGS_INDEX_FILE = os.path.join(DATADIR, 'embeddings_index.json')
-TB_LOG_DIR = datetime.now().strftime('%Y%m%d-%H%M%S')
+TB_LOG_DIR = os.path.join(TB_LOG_ROOT, datetime.now().strftime('%Y%m%d-%H%M%S'))
 # Set hyperparameters
 
 NUM_WORDS = 30000
@@ -74,7 +54,7 @@ MAX_SEQUENCE_LENGTH = 100
 EMBEDDING_DIM = 300
 TRAIN_BATCH_SIZE = 1024
 PREDICTION_BATCH_SIZE = 1024
-EPOCHS = 5
+EPOCHS = 2
 TRAIN_SIZE = 0.95
 DROPOUT_1 = 0.2
 LEARNING_RATE = 0.001
@@ -194,6 +174,23 @@ hist = model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, \
                  
 logging.info(hist)
 
+logging.info('Plot learning curves to png')
+
+plt.plot(hist.history.history['acc'])
+plt.plot(hist.history.history['val_acc'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('loss.png')
+# summarize history for loss
+plt.plot(hist.history.history['loss'])
+plt.plot(hist.history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('cost.png')
 
 logging.info('Running prediction')
 
