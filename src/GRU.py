@@ -15,22 +15,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from keras.models import Model
-from keras.layers import (Input, Dense, Embedding, concatenate, GRU, 
-                          Bidirectional, GlobalAveragePooling1D, 
-                          GlobalMaxPooling1D, BatchNormalization, CuDNNGRU)
-#from keras.optimizers import Adam
+from keras.layers import (Input, Dense, Embedding, concatenate, GRU,
+                          Bidirectional, GlobalAveragePooling1D,
+                          GlobalMaxPooling1D, BatchNormalization)
 from keras.preprocessing import text, sequence
 from keras.callbacks import TensorBoard
-from utils import Metrics, RocAucEvaluation, get_coefs
+from utils import RocAucEvaluation, get_coefs
 
 # Setup logging
 
 LOGGING_CONFIG = 'logging.conf'
 logging.config.fileConfig(LOGGING_CONFIG)
 logger = logging.getLogger('GRU')
-
-
-logger.debug("TEST")
 
 warnings.filterwarnings('ignore')
 RANDOM_SEED = os.environ.get('RANDOM_SEED')
@@ -54,6 +50,8 @@ EMBEDDINGS_INDEX_FILE = os.path.join(DATADIR, 'embeddings_index.json')
 NOW = datetime.now().strftime('%Y%m%d-%H%M%S')
 TB_LOG_DIR = os.path.join(PROJECT_ROOT, 'tb_logs', NOW)
 LOG_DIR = os.path.join(PROJECT_ROOT, 'logs', NOW)
+
+# Add logging filehandler
 
 filehandler = logging.FileHandler(NOW + '.log')
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -177,7 +175,7 @@ logging.info('Creating train/test split with train/test split')
 X_tra, X_val, y_tra, y_val = train_test_split(x_train, y_train, \
     train_size=TRAIN_SIZE, random_state=RANDOM_SEED)
 
-RocAuc = RocAucEvaluation(validation_data=(X_val, y_val), interval=1)
+RocAuc = RocAucEvaluation(logger=logger, validation_data=(X_val, y_val), interval=1)
 
 logging.info('Fitting model')
 
