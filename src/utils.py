@@ -3,9 +3,7 @@
 Helper functions for model evaluation
 """
 
-import tensorflow as tf
 import keras.backend as K
-from keras.preprocessing.sequence import pad_sequences
 from keras.callbacks import Callback
 import numpy as np
 from sklearn.metrics import (precision_score, recall_score, f1_score)
@@ -14,21 +12,24 @@ from sklearn.metrics import roc_auc_score
 
 def get_coefs(word, *arr): 
     """
-    """   
+    """
     return word, np.asarray(arr, dtype='float32')
 
 class RocAucEvaluation(Callback):
-    def __init__(self, validation_data=(), interval=1):
+    """
+    """
+    def __init__(self, logger, validation_data=(), interval=1):
         super(Callback, self).__init__()
 
         self.interval = interval
         self.X_val, self.y_val = validation_data
+        self.logger = logger
 
     def on_epoch_end(self, epoch, logs={}):
         if epoch % self.interval == 0:
             y_pred = self.model.predict(self.X_val, verbose=0)
             score = roc_auc_score(self.y_val, y_pred)
-            print("\n ROC-AUC - epoch: %d - score: %.6f \n" % (epoch+1, score))
+            self.logger.info("\n ROC-AUC - epoch: %d - score: %.6f \n" % (epoch+1, score))
 
 class Metrics(Callback):
     """
