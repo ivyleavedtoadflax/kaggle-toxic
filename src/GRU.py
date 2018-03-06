@@ -72,28 +72,28 @@ LEARNING_RATE = os.environ.get('LEARNING_RATE')
 # https://research.fb.com/wp-content/uploads/2017/06/imagenet1kin1h5.pdf?
 LEARNING_RATE_DECAY = os.environ.get('LEARNING_RATE_DECAY')
 
-logging.info('------- Model hyperparameters -------')
-logging.info('MAX_SEQUENCE_LENGTH:   %s', MAX_SEQUENCE_LENGTH)
-logging.info('NUM_WORDS:             %s', NUM_WORDS)
-logging.info('EMBEDDING_DIM:         %s', EMBEDDING_DIM)
-logging.info('NUM_WORDS:             %s', NUM_WORDS)
-logging.info('EPOCHS:                %s', EPOCHS)
-logging.info('TRAIN_BATCH_SIZE:      %s', TRAIN_BATCH_SIZE)
-logging.info('PREDICTION_BATCH_SIZE: %s', PREDICTION_BATCH_SIZE)
-logging.info('TRAIN_SIZE:            %s', TRAIN_SIZE)
-logging.info('DROPOUT_1:             %s', DROPOUT_1)
-logging.info('LEARNING_RATE:         %s', LEARNING_RATE)
-logging.info('LEARNING_RATE_DECAY:   %s', LEARNING_RATE_DECAY)
-logging.info('------- Other parameters -------')
-logging.info('RANDOM_SEED:           %s', RANDOM_SEED)
-logging.info('DATADIR:               %s', DATADIR)
-logging.info('EMBEDDING_DIR:         %s', EMBEDDING_DIR)
-logging.info('TB_LOG_DIR:            %s', TB_LOG_DIR)
-logging.info('--------------------------------')
+logger.info('------- Model hyperparameters -------')
+logger.info('MAX_SEQUENCE_LENGTH:   %s', MAX_SEQUENCE_LENGTH)
+logger.info('NUM_WORDS:             %s', NUM_WORDS)
+logger.info('EMBEDDING_DIM:         %s', EMBEDDING_DIM)
+logger.info('NUM_WORDS:             %s', NUM_WORDS)
+logger.info('EPOCHS:                %s', EPOCHS)
+logger.info('TRAIN_BATCH_SIZE:      %s', TRAIN_BATCH_SIZE)
+logger.info('PREDICTION_BATCH_SIZE: %s', PREDICTION_BATCH_SIZE)
+logger.info('TRAIN_SIZE:            %s', TRAIN_SIZE)
+logger.info('DROPOUT_1:             %s', DROPOUT_1)
+logger.info('LEARNING_RATE:         %s', LEARNING_RATE)
+logger.info('LEARNING_RATE_DECAY:   %s', LEARNING_RATE_DECAY)
+logger.info('------- Other parameters -------')
+logger.info('RANDOM_SEED:           %s', RANDOM_SEED)
+logger.info('DATADIR:               %s', DATADIR)
+logger.info('EMBEDDING_DIR:         %s', EMBEDDING_DIR)
+logger.info('TB_LOG_DIR:            %s', TB_LOG_DIR)
+logger.info('--------------------------------')
 
 # Load data
 
-logging.info('Loading data files')
+logger.info('Loading data files')
 
 train = pd.read_csv(TRAIN_DATA)
 test = pd.read_csv(TEST_DATA)
@@ -101,7 +101,7 @@ submission = pd.read_csv(SUBMISSION_DATA)
 
 # Fill NAs
 
-logging.info('Filling NAs in training and test data')
+logger.info('Filling NAs in training and test data')
 
 X_train = train["comment_text"].fillna("fillna").values
 y_train = train[["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]].values
@@ -109,30 +109,30 @@ X_test = test["comment_text"].fillna("fillna").values
 
 # tokenizer
 
-logging.info('Instantiating tokenizer')
+logger.info('Instantiating tokenizer')
 tokenizer = text.Tokenizer(num_words=NUM_WORDS)
 
-logging.info('Fitting tokenizer')
+logger.info('Fitting tokenizer')
 tokenizer.fit_on_texts(list(X_train) + list(X_test))
 
-logging.info('Converting texts to squences')
+logger.info('Converting texts to squences')
 
 X_train = tokenizer.texts_to_sequences(X_train)
 X_test = tokenizer.texts_to_sequences(X_test)
 
-logging.info('Padding sequences')
+logger.info('Padding sequences')
 
 x_train = sequence.pad_sequences(X_train, maxlen=MAX_SEQUENCE_LENGTH)
 x_test = sequence.pad_sequences(X_test, maxlen=MAX_SEQUENCE_LENGTH)
 
-logging.info('Creating embeddings_index')
+logger.info('Creating embeddings_index')
 
 embeddings_index = dict(get_coefs(*o.rstrip().rsplit(' ')) for o in open(EMBEDDING_FILE))
     
 word_index = tokenizer.word_index
 nb_words = min(NUM_WORDS, len(word_index))
 
-logging.info('Building embedding matrix')
+logger.info('Building embedding matrix')
 
 embedding_matrix = np.zeros((nb_words, EMBEDDING_DIM))
 for word, i in word_index.items():
@@ -140,9 +140,9 @@ for word, i in word_index.items():
     embedding_vector = embeddings_index.get(word)
     if embedding_vector is not None: embedding_matrix[i] = embedding_vector
 
-logging.info('Defining model')
+logger.info('Defining model')
 
-logging.info('Customise adam optimiser with learning rate decay')
+logger.info('Customise adam optimiser with learning rate decay')
 
 #adam_ = Adam(lr=LEARNING_RATE, decay=LEARNING_RATE_DECAY)
 
@@ -168,42 +168,42 @@ def get_model():
 
 model = get_model()
 
-logging.info(model.summary())
+logger.info(model.summary())
 
-logging.info('Creating train/test split with train/test split')
+logger.info('Creating train/test split with train/test split')
 
 X_tra, X_val, y_tra, y_val = train_test_split(x_train, y_train, \
     train_size=TRAIN_SIZE, random_state=RANDOM_SEED)
 
 RocAuc = RocAucEvaluation(logger=logger, validation_data=(X_val, y_val), interval=1)
 
-logging.info('Fitting model')
+logger.info('Fitting model')
 
 hist = model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, \
     validation_data=(X_val, y_val), callbacks=[RocAuc, tb], verbose=1)
                  
-logging.info(hist)
+logger.info(hist)
 
-logging.info('Plot learning curves to png')
+logger.info('Plot learning curves to png')
 
-plt.plot(hist.history.history['acc'])
-plt.plot(hist.history.history['val_acc'])
-plt.title('model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join(PROJECT_ROOT, 'loss.png'))
+#plt.plot(hist.history.history['acc'])
+#plt.plot(hist.history.history['val_acc'])
+#plt.title('model accuracy')
+#plt.ylabel('accuracy')
+#plt.xlabel('epoch')
+#plt.legend(['train', 'test'], loc='upper left')
+#plt.savefig(os.path.join(PROJECT_ROOT, 'loss.png'))
+#
+## summarize history for loss
+#plt.plot(hist.history.history['loss'])
+#plt.plot(hist.history.history['val_loss'])
+#plt.title('model loss')
+#plt.ylabel('loss')
+#plt.xlabel('epoch')
+#plt.legend(['train', 'test'], loc='upper left')
+#plt.savefig(os.path.join(PROJECT_ROOT, 'cost.png'))
 
-# summarize history for loss
-plt.plot(hist.history.history['loss'])
-plt.plot(hist.history.history['val_loss'])
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.savefig(os.path.join(PROJECT_ROOT, 'cost.png'))
-
-logging.info('Running prediction')
+logger.info('Running prediction')
 
 y_pred = model.predict(x_test, batch_size=PREDICTION_BATCH_SIZE)
 
