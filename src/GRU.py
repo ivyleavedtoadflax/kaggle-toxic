@@ -29,7 +29,7 @@ logging.config.fileConfig(LOGGING_CONFIG)
 logger = logging.getLogger('GRU')
 
 warnings.filterwarnings('ignore')
-RANDOM_SEED = os.environ.get('RANDOM_SEED')
+RANDOM_SEED = int(os.environ.get('RANDOM_SEED'))
 np.random.seed(RANDOM_SEED)
 
 #os.environ['OMP_NUM_THREADS'] = '4'
@@ -49,34 +49,33 @@ SUBMISSION_DATA = os.path.join(DATADIR, 'sample_submission.csv')
 EMBEDDINGS_INDEX_FILE = os.path.join(DATADIR, 'embeddings_index.json')
 NOW = datetime.now().strftime('%Y%m%d-%H%M%S')
 TB_LOG_DIR = os.path.join(PROJECT_ROOT, 'tb_logs', NOW)
-LOG_DIR = os.path.join(PROJECT_ROOT, 'logs', NOW)
+LOG_DIR = os.path.join(PROJECT_ROOT, 'logs')
 
 # Add logging filehandler
 
-filehandler = logging.FileHandler(NOW + '.log')
+filehandler = logging.FileHandler(os.path.join(LOG_DIR, NOW + '.log'))
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 filehandler.setFormatter(formatter)
 logger.addHandler(filehandler)
 
 # Set hyperparameters
 
-NUM_WORDS = os.environ.get('NUM_WORDS')
-MAX_SEQUENCE_LENGTH = os.environ.get('MAX_SEQUENCE_LENGTH')
-EMBEDDING_DIM = os.environ.get('EMBEDDING_DIM')
-TRAIN_BATCH_SIZE = os.environ.get('TRAIN_BATCH_SIZE')
-PREDICTION_BATCH_SIZE = os.environ.get('PREDICTION_BATCH_SIZE')
-EPOCHS = os.environ.get('EPOCHS')
-TRAIN_SIZE = os.environ.get('TRAIN_SIZE')
-DROPOUT_1 = os.environ.get('DROPOUT_1')
-LEARNING_RATE = os.environ.get('LEARNING_RATE')
+NUM_WORDS = int(os.environ.get('NUM_WORDS'))
+MAX_SEQUENCE_LENGTH = int(os.environ.get('MAX_SEQUENCE_LENGTH'))
+EMBEDDING_DIM = int(os.environ.get('EMBEDDING_DIM'))
+TRAIN_BATCH_SIZE = int(os.environ.get('TRAIN_BATCH_SIZE'))
+PREDICTION_BATCH_SIZE = int(os.environ.get('PREDICTION_BATCH_SIZE'))
+EPOCHS = int(os.environ.get('EPOCHS'))
+TRAIN_SIZE = float(os.environ.get('TRAIN_SIZE'))
+DROPOUT_1 = float(os.environ.get('DROPOUT_1'))
+LEARNING_RATE = float(os.environ.get('LEARNING_RATE'))
 # https://research.fb.com/wp-content/uploads/2017/06/imagenet1kin1h5.pdf?
-LEARNING_RATE_DECAY = os.environ.get('LEARNING_RATE_DECAY')
+LEARNING_RATE_DECAY = float(os.environ.get('LEARNING_RATE_DECAY'))
 
 logger.info('------- Model hyperparameters -------')
 logger.info('MAX_SEQUENCE_LENGTH:   %s', MAX_SEQUENCE_LENGTH)
 logger.info('NUM_WORDS:             %s', NUM_WORDS)
 logger.info('EMBEDDING_DIM:         %s', EMBEDDING_DIM)
-logger.info('NUM_WORDS:             %s', NUM_WORDS)
 logger.info('EPOCHS:                %s', EPOCHS)
 logger.info('TRAIN_BATCH_SIZE:      %s', TRAIN_BATCH_SIZE)
 logger.info('PREDICTION_BATCH_SIZE: %s', PREDICTION_BATCH_SIZE)
@@ -89,6 +88,7 @@ logger.info('RANDOM_SEED:           %s', RANDOM_SEED)
 logger.info('DATADIR:               %s', DATADIR)
 logger.info('EMBEDDING_DIR:         %s', EMBEDDING_DIR)
 logger.info('TB_LOG_DIR:            %s', TB_LOG_DIR)
+logger.info('LOG_DIR:               %s', LOG_DIR)
 logger.info('--------------------------------')
 
 # Load data
@@ -142,10 +142,6 @@ for word, i in word_index.items():
 
 logger.info('Defining model')
 
-logger.info('Customise adam optimiser with learning rate decay')
-
-#adam_ = Adam(lr=LEARNING_RATE, decay=LEARNING_RATE_DECAY)
-
 tb = TensorBoard(
     log_dir=TB_LOG_DIR, histogram_freq=0,
     write_graph=True, write_images=False
@@ -182,27 +178,6 @@ logger.info('Fitting model')
 hist = model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, \
     validation_data=(X_val, y_val), callbacks=[RocAuc, tb], verbose=1)
                  
-logger.info(hist)
-
-logger.info('Plot learning curves to png')
-
-#plt.plot(hist.history.history['acc'])
-#plt.plot(hist.history.history['val_acc'])
-#plt.title('model accuracy')
-#plt.ylabel('accuracy')
-#plt.xlabel('epoch')
-#plt.legend(['train', 'test'], loc='upper left')
-#plt.savefig(os.path.join(PROJECT_ROOT, 'loss.png'))
-#
-## summarize history for loss
-#plt.plot(hist.history.history['loss'])
-#plt.plot(hist.history.history['val_loss'])
-#plt.title('model loss')
-#plt.ylabel('loss')
-#plt.xlabel('epoch')
-#plt.legend(['train', 'test'], loc='upper left')
-#plt.savefig(os.path.join(PROJECT_ROOT, 'cost.png'))
-
 logger.info('Running prediction')
 
 y_pred = model.predict(x_test, batch_size=PREDICTION_BATCH_SIZE)
