@@ -1,3 +1,5 @@
 .envrc
 input
 *__pycache__
+logs
+tb_logs
