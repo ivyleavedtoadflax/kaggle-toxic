@@ -79,7 +79,9 @@ resource "aws_instance" "box" {
     provisioner "remote-exec" {
         inline = [
             "sudo locale-gen en_GB.UTF-8",
+	    "sleep 1",
             "sudo apt-get -y update",
+            "sleep 1",
             "sudo apt-get -y install python-dev"
         ]
 

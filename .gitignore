@@ -4,3 +4,4 @@ input
 logs
 tb_logs
 .terraform
+terraform.tfstate*

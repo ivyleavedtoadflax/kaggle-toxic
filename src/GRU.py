@@ -22,9 +22,11 @@ from keras.preprocessing import text, sequence
 from keras.callbacks import TensorBoard
 from utils import RocAucEvaluation, get_coefs
 
+PROJECT_ROOT = os.environ.get('PROJECT_ROOT')
+
 # Setup logging
 
-LOGGING_CONFIG = 'logging.conf'
+LOGGING_CONFIG = os.path.join(PROJECT_ROOT, 'logging.conf')
 logging.config.fileConfig(LOGGING_CONFIG)
 logger = logging.getLogger('GRU')
 
@@ -34,11 +36,8 @@ np.random.seed(RANDOM_SEED)
 
 #os.environ['OMP_NUM_THREADS'] = '4'
 
-# Load environmental variables
-
 DATADIR = os.environ.get('DATADIR') # = '../input/jigsaw-toxic-comment-classification-challenge/'
 EMBEDDING_DIR = os.environ.get('EMBEDDING_DIR') # = '../input/fasttext-crawl-300d-2m/'
-PROJECT_ROOT = os.environ.get('PROJECT_ROOT')
 
 # Set data locations
 
