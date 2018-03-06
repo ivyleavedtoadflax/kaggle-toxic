@@ -23,8 +23,20 @@
         fstype: ext4
         state: mounted
 
-    - name: Clone latest govuk-taxonomy-supervised-learning 
+    - name: Clone latest source file repo 
       git:
         repo: https://github.com/ivyleavedtoadflax/kaggle-toxic.git
         dest: /home/ubuntu/kaggle-toxic
       become_user: ubuntu
+
+    - name: Install package python-tk
+      apt:
+        name: python-tk
+
+        #    - name: Install direnv
+        #      apt:
+        #        name: direnv
+        #
+        #    - name: install direnv bash hook
+        #      command: direnv hook bash >> /home/ubuntu/.bashrc
+

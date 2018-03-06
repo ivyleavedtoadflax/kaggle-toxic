@@ -5,3 +5,4 @@ logs
 tb_logs
 .terraform
 terraform.tfstate*
+playbooks/*.retry
