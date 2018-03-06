@@ -1,0 +1,30 @@
+- name: "Setup AMI for deep learning"
+  hosts: all
+  become: true
+
+  tasks:
+
+    - name: format the EBS filesystem
+      filesystem:
+        fstype: ext4
+        dev: /dev/xvdh
+
+    - name: configure the EBS volume mount point
+      mount:
+        path: /data
+        src: /dev/xvdh
+        fstype: ext4
+        state: present
+
+    - name: mount the EBS volume
+      mount:
+        path: /data
+        src: /dev/xvdh
+        fstype: ext4
+        state: mounted
+
+    - name: Clone latest govuk-taxonomy-supervised-learning 
+      git:
+        repo: https://github.com/ivyleavedtoadflax/kaggle-toxic.git
+        dest: /home/ubuntu/kaggle-toxic
+      become_user: ubuntu
