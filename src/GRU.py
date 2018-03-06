@@ -15,7 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from keras.models import Model
-from keras.layers import (Input, Dense, Embedding, concatenate, GRU,
+from keras.layers import (Input, Dense, Embedding, concatenate, CuDNNGRU,
                           Bidirectional, GlobalAveragePooling1D,
                           GlobalMaxPooling1D, BatchNormalization)
 from keras.preprocessing import text, sequence
@@ -150,7 +150,7 @@ tb = TensorBoard(
 def get_model():
     inp = Input(shape=(MAX_SEQUENCE_LENGTH, ))
     x = Embedding(NUM_WORDS, EMBEDDING_DIM, weights=[embedding_matrix])(inp)
-    x = Bidirectional(GRU(80, return_sequences=True))(x)
+    x = Bidirectional(CuDNNGRU(80, return_sequences=True))(x)
     avg_pool = GlobalAveragePooling1D()(x)
     max_pool = GlobalMaxPooling1D()(x)
     conc = concatenate([avg_pool, max_pool])
@@ -174,9 +174,9 @@ RocAuc = RocAucEvaluation(logger=logger, validation_data=(X_val, y_val), interva
 
 logger.info('Fitting model')
 
-hist = model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, \
-    validation_data=(X_val, y_val), callbacks=[RocAuc, tb], verbose=1)
-                 
+hist = model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, 
+                 callbacks=[RocAuc, tb], verbose=1)
+
 logger.info('Running prediction')
 
 y_pred = model.predict(x_test, batch_size=PREDICTION_BATCH_SIZE)
@@ -184,4 +184,4 @@ y_pred = model.predict(x_test, batch_size=PREDICTION_BATCH_SIZE)
 submission[["toxic", "severe_toxic", "obscene", 
             "threat", "insult", "identity_hate"]] = y_pred
 
-submission.to_csv('submission.csv', index=False)
+submission.to_csv(os.path.join(PROJECT_ROOT,NOW + '_submission.csv'), index=False)
