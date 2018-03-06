@@ -5,6 +5,9 @@ ip:
 local_run: 
 	python3 src/GRU.py
 
+connect:
+	ssh -L localhost:6006:localhost:6006 ubuntu@`terraform output ec2_ip`
+
 up:
 	./databox.sh -i ${INSTANCE} -a ${AMI} \
 	-r ${REGION} -p ${PLAYBOOK} \
