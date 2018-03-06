@@ -24,10 +24,10 @@ create_snapshot:
 describe_snapshots:
 		aws ec2 describe-snapshots \
 		--region ${REGION} --profile ${PROFILE} \
-		--owner-id ${OWNER_ID} | jq
+		--owner-id ${OWNER_ID}
 
 describe_instances:
 		aws ec2 describe-instances \
-		--region ${REGION} --profile ${PROFILE} | jq
+		--region ${REGION} --profile ${PROFILE}
 .PHONY:
 

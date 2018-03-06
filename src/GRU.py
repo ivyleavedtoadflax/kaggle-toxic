@@ -49,6 +49,7 @@ EMBEDDINGS_INDEX_FILE = os.path.join(DATADIR, 'embeddings_index.json')
 NOW = datetime.now().strftime('%Y%m%d-%H%M%S')
 TB_LOG_DIR = os.path.join(PROJECT_ROOT, 'tb_logs', NOW)
 LOG_DIR = os.path.join(PROJECT_ROOT, 'logs')
+SAVE_DIR = os.path.join(PROJECT_ROOT, 'saved_models')
 
 # Add logging filehandler
 
@@ -88,6 +89,7 @@ logger.info('DATADIR:               %s', DATADIR)
 logger.info('EMBEDDING_DIR:         %s', EMBEDDING_DIR)
 logger.info('TB_LOG_DIR:            %s', TB_LOG_DIR)
 logger.info('LOG_DIR:               %s', LOG_DIR)
+logger.info('SAVE_DIR:              %s', SAVE_DIR)
 logger.info('--------------------------------')
 
 # Load data
@@ -174,8 +176,8 @@ RocAuc = RocAucEvaluation(logger=logger, validation_data=(X_val, y_val), interva
 
 logger.info('Fitting model')
 
-hist = model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, 
-                 callbacks=[RocAuc, tb], verbose=1)
+model.fit(X_tra, y_tra, batch_size=TRAIN_BATCH_SIZE, epochs=EPOCHS, 
+          callbacks=[RocAuc, tb], verbose=1)
 
 logger.info('Running prediction')
 
@@ -184,4 +186,8 @@ y_pred = model.predict(x_test, batch_size=PREDICTION_BATCH_SIZE)
 submission[["toxic", "severe_toxic", "obscene", 
             "threat", "insult", "identity_hate"]] = y_pred
 
-submission.to_csv(os.path.join(PROJECT_ROOT,NOW + '_submission.csv'), index=False)
+submission.to_csv(os.path.join(PROJECT_ROOT, NOW + '_submission.csv'), index=False)
+
+logger.info('Saving model to: %s', SAVE_DIR)
+
+model.save(os.path.join(SAVE_DIR, NOW + 'model.h5'))
