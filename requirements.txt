@@ -57,7 +57,7 @@ six==1.11.0
 sklearn==0.0
 stevedore==1.28.0
 stopit==1.1.1
-tensorflow==1.12.2
+tensorflow==2.5.1
 tensorflow-tensorboard==0.4.0
 terminado==0.8.1
 testpath==0.3.1
